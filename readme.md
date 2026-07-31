@@ -159,6 +159,6 @@ Open `http://localhost:8000` in your browser:
 
 ## Notes
 
-- All schema fields are `Optional` — missing data in the source document is handled gracefully (rendered as `-` / "Not available" rather than failing).
+- All schema fields are `Optional` — missing data in the source document is handled gracefully
 - Fiscal years in extracted tables use generic keys (`fy_minus_2` … `fy_plus_2`) instead of hardcoded years, so the schema works across any company's reporting calendar.
 - The page index returns confidence scores alongside page numbers, so extractors/future logic can detect low-confidence retrieval and adjust.
