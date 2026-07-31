@@ -1,38 +1,38 @@
-import os 
-import json, httpx
+import os
+import json
+from huggingface_hub import InferenceClient
 from dotenv import load_dotenv
 
 load_dotenv()
 
-OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY')
-OPENROUTER_MODEL = os.getenv('OPENROUTER_MODEL')
-OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+HF_API_TOKEN = os.getenv("HF_API_TOKEN")
+HF_MODEL = os.getenv("HF_MODEL", "Qwen/Qwen2.5-7B-Instruct").strip()
 
-def call_llm(system_prompt: str, user_content:str) -> dict:
-    headers = {
-        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-        "Content-Type": "application/json",
-    }
+if not HF_API_TOKEN:
+    print("[LLM WARNING] HF_API_TOKEN is not set — check your .env file")
 
-    payload = {
-        "model": OPENROUTER_MODEL,
-        "message": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_content}
-        ],
-        "temperature": 0,
-    }
+client = InferenceClient(model=HF_MODEL, token=HF_API_TOKEN)
+
+
+def call_llm(system_prompt: str, user_content: str) -> dict:
 
     try:
-        with httpx.Client(timeout=60) as client:
-            resp = client.post(OPENROUTER_URL, headers=headers, payload=payload)
-            resp.raise_for_status()
-            raw_text = resp.json()['choices'][0]["message"]["content"]
+        response = client.chat.completions.create(
+            model=HF_MODEL,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_content},
+            ],
+            temperature=0,
+            max_tokens=1500,
+        )
+        raw_text = response.choices[0].message.content
     except Exception as e:
         print(f"[LLM ERROR] {e}")
         return {}
 
     return _safe_json_parse(raw_text)
+
 
 def _safe_json_parse(text: str) -> dict:
     cleaned = text.strip()

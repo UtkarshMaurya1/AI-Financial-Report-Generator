@@ -86,12 +86,14 @@ def parse_document(file_path: str) -> ParsedDocument:
         if label in ("section_header", "title"):
             pages[page_no].blocks.append(Block(type="heading", text=item_text))
         elif label == "table":
-            table_data = _extract_table_data(item)
+            table_data = _extract_table_data(item, doc=doc)
             pages[page_no].blocks.append(
                 Block(type="table", text=table_data.markdown, table_data=table_data)
             )
         elif label == "caption":
             pages[page_no].blocks.append(Block(type="caption", text=item_text))
+
+        
         else:
             if item_text.strip():
                 pages[page_no].blocks.append(Block(type="paragraph", text=item_text))
@@ -124,11 +126,10 @@ def _get_page_number(item) -> Optional[int]:
     return None
 
 
-def _extract_table_data(item) -> TableData:
-    """Extracts structured rows if Docling exposes them, else falls back to markdown only."""
+def _extract_table_data(item, doc=None) -> TableData:
     rows: list[list[str]] = []
     try:
-        table_obj = item.export_to_dataframe()  # Docling TableItem → pandas DataFrame
+        table_obj = item.export_to_dataframe(doc=doc) if doc else item.export_to_dataframe()
         rows = [list(table_obj.columns)] + table_obj.values.tolist()
     except Exception:
         pass

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+    @page { size: A4; margin: 1.5cm; }
+    body { font-family: Arial, sans-serif; font-size: 10px; color: #222; }
+    .header { display: flex; justify-content: space-between; align-items: center; background: #1b7b6f; color: white; padding: 10px 15px; }
+    .header h1 { font-size: 16px; margin: 0; }
+    .company-title { font-size: 20px; font-weight: bold; margin: 10px 0 0 0; }
+    .sector-line { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 8px; }
+    .rating-box { background: #eee; padding: 6px 12px; font-weight: bold; float: right; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+    th, td { border: 1px solid #ccc; padding: 4px 6px; font-size: 9px; text-align: left; }
+    th { background: #1b7b6f; color: white; }
+    .section-title { color: #1b7b6f; font-size: 13px; font-weight: bold; margin: 14px 0 6px 0; border-bottom: 2px solid #1b7b6f; }
+    ul { margin: 4px 0; padding-left: 16px; }
+    li { margin-bottom: 4px; }
+    .charts-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+    .charts-grid img { width: 48%; }
+    .footer { text-align: center; font-size: 8px; color: #888; margin-top: 20px; }
+    .page-break { page-break-before: always; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+    <h1>Retail Equity Research</h1>
+    <span>GEOJIT-style Report</span>
+</div>
+
+<p class="company-title">{{ company.company_name or "Unknown Company" }}</p>
+<div class="sector-line">
+    <span>Sector: {{ company.sector or "-" }}</span>
+    <span>{{ company.report_date or "" }}</span>
+</div>
+
+<div class="rating-box">{{ company.rating or "N/A" }}</div>
+<table>
+    <tr><th>Target</th><th>CMP</th><th>Return</th></tr>
+    <tr>
+        <td>{{ company.target_price or "-" }}</td>
+        <td>{{ company.cmp or "-" }}</td>
+        <td>{{ company.expected_return_pct or "-" }}%</td>
+    </tr>
+</table>
+
+<!-- Company Data + Shareholding -->
+<div class="section-title">Company Data</div>
+<table>
+    <tr><td>Market Cap (Cr)</td><td>{{ company_data.market_cap or "-" }}</td></tr>
+    <tr><td>52 Week High-Low</td><td>{{ company_data.week_52_high or "-" }} - {{ company_data.week_52_low or "-" }}</td></tr>
+    <tr><td>Enterprise Value</td><td>{{ company_data.enterprise_value or "-" }}</td></tr>
+    <tr><td>Outstanding Shares</td><td>{{ company_data.outstanding_shares or "-" }}</td></tr>
+    <tr><td>Free Float (%)</td><td>{{ company_data.free_float_pct or "-" }}</td></tr>
+    <tr><td>Beta</td><td>{{ company_data.beta or "-" }}</td></tr>
+</table>
+
+<div class="section-title">Shareholding (%)</div>
+<table>
+    <tr><th>Period</th><th>Promoters</th><th>FII</th><th>MF/Institutions</th><th>Public</th><th>Others</th></tr>
+    {% for row in financials.shareholding %}
+    <tr>
+        <td>{{ row.period }}</td>
+        <td>{{ row.promoters if row.promoters is not none else "-" }}</td>
+        <td>{{ row.fii if row.fii is not none else "-" }}</td>
+        <td>{{ row.mf_institutions if row.mf_institutions is not none else "-" }}</td>
+        <td>{{ row.public if row.public is not none else "-" }}</td>
+        <td>{{ row.others if row.others is not none else "-" }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<div class="section-title">Price Performance</div>
+<table>
+    <tr><th>Period</th><th>Absolute Return</th><th>Benchmark</th><th>Relative Return</th></tr>
+    {% for row in financials.price_performance %}
+    <tr>
+        <td>{{ row.period }}</td>
+        <td>{{ row.absolute_return if row.absolute_return is not none else "-" }}%</td>
+        <td>{{ row.absolute_benchmark if row.absolute_benchmark is not none else "-" }}%</td>
+        <td>{{ row.relative_return if row.relative_return is not none else "-" }}%</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<!-- Quarterly Financials -->
+<div class="section-title">Quarterly Financials</div>
+<table>
+    <tr><th>Metric</th><th>Current Qtr</th><th>YoY Qtr</th><th>YoY Growth %</th><th>Prev Qtr</th><th>QoQ Growth %</th></tr>
+    {% for row in financials.quarterly %}
+    <tr>
+        <td>{{ row.metric }}</td>
+        <td>{{ row.current_quarter if row.current_quarter is not none else "-" }}</td>
+        <td>{{ row.yoy_quarter if row.yoy_quarter is not none else "-" }}</td>
+        <td>{{ row.yoy_growth_pct if row.yoy_growth_pct is not none else "-" }}</td>
+        <td>{{ row.prev_quarter if row.prev_quarter is not none else "-" }}</td>
+        <td>{{ row.qoq_growth_pct if row.qoq_growth_pct is not none else "-" }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<!-- Highlights -->
+<div class="section-title">Key Highlights</div>
+<ul>
+    {% for point in highlights %}
+    <li>{{ point }}</li>
+    {% else %}
+    <li>No highlights extracted.</li>
+    {% endfor %}
+</ul>
+
+<!-- Outlook & Valuation -->
+<div class="section-title">Outlook & Valuation</div>
+<p>{{ outlook or "Not available." }}</p>
+<p>{{ valuation or "" }}</p>
+
+<div class="page-break"></div>
+
+<!-- Charts -->
+<div class="section-title">Charts</div>
+<div class="charts-grid">
+    {% if charts.revenue_chart_path %}<img src="{{ charts.revenue_chart_path }}">{% endif %}
+    {% if charts.ebitda_chart_path %}<img src="{{ charts.ebitda_chart_path }}">{% endif %}
+    {% if charts.pat_chart_path %}<img src="{{ charts.pat_chart_path }}">{% endif %}
+    {% if charts.gov_chart_path %}<img src="{{ charts.gov_chart_path }}">{% endif %}
+</div>
+
+<!-- Annual Financials -->
+<div class="section-title">Annual Financials</div>
+<table>
+    <tr><th>Metric</th><th>FY-2</th><th>FY-1</th><th>FY Current</th><th>FY+1</th><th>FY+2</th></tr>
+    {% for row in financials.annual %}
+    <tr>
+        <td>{{ row.metric }}</td>
+        <td>{{ row.fy_minus_2 if row.fy_minus_2 is not none else "-" }}</td>
+        <td>{{ row.fy_minus_1 if row.fy_minus_1 is not none else "-" }}</td>
+        <td>{{ row.fy_current if row.fy_current is not none else "-" }}</td>
+        <td>{{ row.fy_plus_1 if row.fy_plus_1 is not none else "-" }}</td>
+        <td>{{ row.fy_plus_2 if row.fy_plus_2 is not none else "-" }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<!-- Ratios -->
+<div class="section-title">Ratios</div>
+<table>
+    <tr><th>Category</th><th>Metric</th><th>FY-2</th><th>FY-1</th><th>FY Current</th><th>FY+1</th><th>FY+2</th></tr>
+    {% for row in financials.ratios %}
+    <tr>
+        <td>{{ row.category }}</td>
+        <td>{{ row.metric }}</td>
+        <td>{{ row.values.get("fy_minus_2", "-") }}</td>
+        <td>{{ row.values.get("fy_minus_1", "-") }}</td>
+        <td>{{ row.values.get("fy_current", "-") }}</td>
+        <td>{{ row.values.get("fy_plus_1", "-") }}</td>
+        <td>{{ row.values.get("fy_plus_2", "-") }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<div class="footer">
+    Generated automatically — AI Financial Research Report Generator
+</div>
+
+</body>
+</html>

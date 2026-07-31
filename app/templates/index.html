@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Financial Research Report Generator</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 500px; margin: 60px auto; }
+        input, button { display: block; margin: 12px 0; padding: 8px; width: 100%; }
+        button { background: #1b7b6f; color: white; border: none; cursor: pointer; }
+        #status { margin-top: 15px; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <h2>Generate Financial Research Report</h2>
+    <form id="reportForm">
+        <input type="text" name="company_name" placeholder="Company Name" required>
+        <input type="file" name="file" accept=".pdf,.csv,.txt" required>
+        <button type="submit">Generate Report</button>
+    </form>
+    <div id="status"></div>
+
+    <script>
+        const form = document.getElementById("reportForm");
+        const status = document.getElementById("status");
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            status.textContent = "Processing... this may take a minute.";
+
+            const formData = new FormData(form);
+            try {
+                const res = await fetch("/generate-report", { method: "POST", body: formData });
+                if (!res.ok) throw new Error("Report generation failed");
+
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "research_report.pdf";
+                a.click();
+                status.textContent = "Report downloaded successfully.";
+            } catch (err) {
+                status.textContent = "Error: " + err.message;
+            }
+        });
+    </script>
+</body>
+</html>
