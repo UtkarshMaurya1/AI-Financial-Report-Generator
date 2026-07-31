@@ -34,7 +34,6 @@ The Geojit PDF is **not** the input — it's the visual/structural template the 
 | PDF Rendering | WeasyPrint |
 | Storage | None — fully in-memory / stateless per request |
 
-**Explicitly not used:** LangChain, LangGraph, CrewAI, FAISS, Pinecone, ChromaDB, Milvus, vector embeddings, hybrid search, rerankers, agent frameworks.
 
 ---
 
