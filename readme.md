@@ -2,7 +2,7 @@
 
 An AI-powered application that automatically generates a professional equity research report from raw company financial documents (PDF, CSV, or TXT). The output PDF is styled to closely match Geojit's "Retail Equity Research" report format.
 
-This is a deterministic, vector-database-free pipeline — no embeddings, no FAISS/Pinecone/Chroma, no agent frameworks. Retrieval is done via a keyword + heading-weighted page index, and extraction uses task-specific LLM prompts (not one giant prompt).
+This is a deterministic, **Vectorless RAG** pipeline — no embeddings, no FAISS/Pinecone/Chroma, no agent frameworks. Retrieval is done via a keyword + heading-weighted page index, and extraction uses task-specific LLM prompts (not one giant prompt).
 
 ---
 
@@ -53,9 +53,9 @@ Upload (Company Name + Document)
             │
             ▼
    ┌────────┴─────────┐
-   │  7 Extractors     │  → company, financials (shareholding +
-   │  (task-specific    │     price performance), quarterly, annual
-   │   LLM prompts)     │     (+ P&L/BS/CF/ratios), highlights,
+   │  7 Extractors    │  → company, financials (shareholding +
+   │  (task-specific  │     price performance), quarterly, annual
+   │   LLM prompts)   │     (+ P&L/BS/CF/ratios), highlights,
    └────────┬─────────┘     outlook, valuation
             │
             ▼
@@ -123,7 +123,7 @@ app/
 ### 1. Clone and set up environment
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/UtkarshMaurya1/AI-Financial-Report-Generator.git
 cd ai_financial_report
 python -m venv venv
 source venv/bin/activate      # Windows: venv\Scripts\activate
@@ -155,21 +155,10 @@ Open `http://localhost:8000` in your browser:
 - Click **Generate Report**
 - The generated PDF downloads automatically
 
-### 5. Quick isolated LLM test (optional, before full run)
-
-```bash
-python -c "
-from app.extractors.llm_client import call_llm
-result = call_llm('Return ONLY valid JSON: {\"ok\": true}', 'test')
-print(result)
-"
-```
-
 ---
 
 ## Notes
 
 - All schema fields are `Optional` — missing data in the source document is handled gracefully (rendered as `-` / "Not available" rather than failing).
 - Fiscal years in extracted tables use generic keys (`fy_minus_2` … `fy_plus_2`) instead of hardcoded years, so the schema works across any company's reporting calendar.
-- The page index returns confidence scores alongside page numbers, so extractors/future logic can detect low-confidence retrieval and adjust (e.g. widen page range).
-- This is an assignment-scoped project — prioritizes clean, modular, explainable architecture over production-grade scaling.
+- The page index returns confidence scores alongside page numbers, so extractors/future logic can detect low-confidence retrieval and adjust.
