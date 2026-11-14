@@ -1,4 +1,5 @@
 import os
+import re
 import json
 from huggingface_hub import InferenceClient
 from dotenv import load_dotenv
@@ -13,9 +14,12 @@ if not HF_API_TOKEN:
 
 client = InferenceClient(model=HF_MODEL, token=HF_API_TOKEN)
 
+# Used by the evaluation phase to measure JSON validity rate
+LLM_STATS = {"calls": 0, "valid_json": 0}
+
 
 def call_llm(system_prompt: str, user_content: str) -> dict:
-
+    LLM_STATS["calls"] += 1
     try:
         response = client.chat.completions.create(
             model=HF_MODEL,
@@ -31,16 +35,30 @@ def call_llm(system_prompt: str, user_content: str) -> dict:
         print(f"[LLM ERROR] {e}")
         return {}
 
-    return _safe_json_parse(raw_text)
+    result = _safe_json_parse(raw_text)
+    if result:
+        LLM_STATS["valid_json"] += 1
+    return result
 
 
 def _safe_json_parse(text: str) -> dict:
     cleaned = text.strip()
+
     if cleaned.startswith("```"):
         cleaned = cleaned.strip("`")
         cleaned = cleaned.replace("json\n", "", 1).replace("json", "", 1)
+
     try:
         return json.loads(cleaned)
     except json.JSONDecodeError:
-        print(f"[LLM WARNING] Could not parse JSON:\n{text[:300]}")
-        return {}
+        pass
+
+    match = re.search(r"\{.*\}", cleaned, re.DOTALL)
+    if match:
+        try:
+            return json.loads(match.group(0))
+        except json.JSONDecodeError:
+            pass
+
+    print(f"[LLM WARNING] Could not parse JSON:\n{text[:300]}")
+    return {}
